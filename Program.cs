@@ -33,6 +33,20 @@ builder.Services.AddHttpClient<NasaLibraryClient>(client =>
     client.BaseAddress = new Uri("https://images-api.nasa.gov/");
 });
 
+// Open-Meteo (Geocoding)
+builder.Services.AddHttpClient<OpenMeteoGeocodingClient>(client =>
+{
+    client.BaseAddress = new Uri("https://geocoding-api.open-meteo.com/");
+    client.Timeout = TimeSpan.FromSeconds(10);
+});
+
+// Open-Meteo (Forecast)
+builder.Services.AddHttpClient<OpenMeteoForecastClient>(client =>
+{
+    client.BaseAddress = new Uri("https://api.open-meteo.com/");
+    client.Timeout = TimeSpan.FromSeconds(10);
+});
+
 var app = builder.Build();
 
 // -------------------- Dev tools --------------------
