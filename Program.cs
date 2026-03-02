@@ -1,4 +1,6 @@
 using SpaceAPI.Services;
+using SpaceAPI.Database;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -46,6 +48,15 @@ builder.Services.AddHttpClient<OpenMeteoForecastClient>(client =>
     client.BaseAddress = new Uri("https://api.open-meteo.com/");
     client.Timeout = TimeSpan.FromSeconds(10);
 });
+
+// -------------------- SQLite Space DB (REGISTER BEFORE Build) --------------------
+var cs = builder.Configuration.GetConnectionString("SpaceDb") ?? "Data Source=App_Data/space.db";
+
+// Optional but recommended: make sure App_Data exists (works nice for local dev)
+Directory.CreateDirectory(Path.Combine(builder.Environment.ContentRootPath, "App_Data"));
+
+builder.Services.AddDbContext<SpaceDbContext>(opt => opt.UseSqlite(cs));
+builder.Services.AddScoped<IPlanetService, PlanetService>();
 
 var app = builder.Build();
 
