@@ -50,7 +50,8 @@ builder.Services.AddHttpClient<OpenMeteoForecastClient>(client =>
 });
 
 // -------------------- SQLite Space DB (REGISTER BEFORE Build) --------------------
-var cs = builder.Configuration.GetConnectionString("SpaceDb") ?? "Data Source=App_Data/space.db";
+var cs = builder.Configuration.GetConnectionString("SpaceDb")
+         ?? "Data Source=App_Data/space.db;Foreign Keys=True";
 
 // Optional but recommended: make sure App_Data exists (works nice for local dev)
 Directory.CreateDirectory(Path.Combine(builder.Environment.ContentRootPath, "App_Data"));

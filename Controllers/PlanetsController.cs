@@ -24,5 +24,16 @@ namespace SpaceAPI.Controllers
             var planet = await _service.GetByIdAsync(id, ct);
             return planet is null ? NotFound() : Ok(planet);
         }
+
+        [HttpGet("satellites")]
+        public async Task<ActionResult<List<SatelliteDto>>> GetAllSatellites(CancellationToken ct) =>
+            Ok(await _service.GetAllSatellitesAsync(ct));
+
+        [HttpGet("satellites/{id:int}")]
+        public async Task<ActionResult<SatelliteDto>> GetSatelliteById(int id, CancellationToken ct)
+        {
+            var satellite = await _service.GetSatelliteByIdAsync(id, ct);
+            return satellite is null ? NotFound() : Ok(satellite);
+        }
     }
 }

@@ -38,5 +38,37 @@ namespace SpaceAPI.Services
               Description = p.Description
           })
           .FirstOrDefaultAsync(ct);
+
+        public Task<List<SatelliteDto>> GetAllSatellitesAsync(CancellationToken ct) =>
+            _db.Satellites
+                .AsNoTracking()
+                .OrderBy(s => s.Id)
+                .Select(s => new SatelliteDto
+                {
+                    Id = s.Id,
+                    Name = s.Name,
+                    RadiusKm = s.RadiusKm,
+                    OrbitalPeriodDays = s.OrbitalPeriodDays,
+                    PlanetId = s.PlanetId,
+                    PlanetName = s.Planet.Name,
+                    Description = s.Description
+                })
+                .ToListAsync(ct);
+
+        public Task<SatelliteDto?> GetSatelliteByIdAsync(int id, CancellationToken ct) =>
+            _db.Satellites
+                .AsNoTracking()
+                .Where(s => s.Id == id)
+                .Select(s => new SatelliteDto
+                {
+                    Id = s.Id,
+                    Name = s.Name,
+                    RadiusKm = s.RadiusKm,
+                    OrbitalPeriodDays = s.OrbitalPeriodDays,
+                    PlanetId = s.PlanetId,
+                    PlanetName = s.Planet.Name,
+                    Description = s.Description
+                })
+                .FirstOrDefaultAsync(ct);
     }
 }
