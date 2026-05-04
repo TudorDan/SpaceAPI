@@ -1,6 +1,6 @@
-using SpaceAPI.Services;
-using SpaceAPI.Database;
 using Microsoft.EntityFrameworkCore;
+using SpaceAPI.Database;
+using SpaceAPI.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,16 +13,19 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// -------------------- CORS (allow Vite dev server) --------------------
-// Vite default dev server port is 5173.
+// -------------------- CORS --------------------
 builder.Services.AddCors(options =>
 {
     options.AddPolicy(name: FrontendCorsPolicy, policy =>
     {
         policy
             .WithOrigins(
+                // Local Vite development
                 "http://localhost:5173",
-                "http://127.0.0.1:5173"
+                "http://127.0.0.1:5173",
+
+            // Later, add GitHub Pages here:
+                "https://TudorDan.github.io"
             )
             .AllowAnyHeader()
             .AllowAnyMethod();
@@ -35,47 +38,50 @@ builder.Services.AddHttpClient<NasaLibraryClient>(client =>
     client.BaseAddress = new Uri("https://images-api.nasa.gov/");
 });
 
-// Open-Meteo (Geocoding)
+// -------------------- Open-Meteo Geocoding --------------------
 builder.Services.AddHttpClient<OpenMeteoGeocodingClient>(client =>
 {
     client.BaseAddress = new Uri("https://geocoding-api.open-meteo.com/");
     client.Timeout = TimeSpan.FromSeconds(10);
 });
 
-// Open-Meteo (Forecast)
+// -------------------- Open-Meteo Forecast --------------------
 builder.Services.AddHttpClient<OpenMeteoForecastClient>(client =>
 {
     client.BaseAddress = new Uri("https://api.open-meteo.com/");
     client.Timeout = TimeSpan.FromSeconds(10);
 });
 
-// -------------------- SQLite Space DB (REGISTER BEFORE Build) --------------------
+// -------------------- SQLite Space DB --------------------
+var appDataPath = Path.Combine(builder.Environment.ContentRootPath, "App_Data");
+Directory.CreateDirectory(appDataPath);
+
+var dbPath = Path.Combine(appDataPath, "space.db");
+
 var cs = builder.Configuration.GetConnectionString("SpaceDb")
-         ?? "Data Source=App_Data/space.db;Foreign Keys=True";
+         ?? $"Data Source={dbPath};Foreign Keys=True";
 
-// Optional but recommended: make sure App_Data exists (works nice for local dev)
-Directory.CreateDirectory(Path.Combine(builder.Environment.ContentRootPath, "App_Data"));
+builder.Services.AddDbContext<SpaceDbContext>(options =>
+{
+    options.UseSqlite(cs);
+});
 
-builder.Services.AddDbContext<SpaceDbContext>(opt => opt.UseSqlite(cs));
 builder.Services.AddScoped<IPlanetService, PlanetService>();
 
 var app = builder.Build();
 
-// -------------------- Dev tools --------------------
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+// -------------------- Swagger --------------------
+// Keep Swagger enabled temporarily for deployment testing.
+// Later, you can place this back inside the Development-only condition.
+app.UseSwagger();
+app.UseSwaggerUI();
 
-// NOTE:
-// If your frontend calls the API using http:// (and your API redirects to https://),
-// the browser preflight can fail due to redirects.
-// Prefer calling the https:// API URL from the frontend/proxy if you keep this enabled.
+// -------------------- HTTPS --------------------
 app.UseHttpsRedirection();
 
-// CORS middleware should run after routing and before endpoints (controllers)
+// -------------------- Routing / CORS / Controllers --------------------
 app.UseRouting();
+
 app.UseCors(FrontendCorsPolicy);
 
 app.MapControllers();
